@@ -5,9 +5,62 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.ServiceProcess;
+using System.Configuration.Install;
+using System.Reflection;
 
 namespace Wolframcarbid
 {
+    public class CWcService : ServiceBase
+    {
+        //bInstall: true
+        //          Self-installing Wolframcarbid
+        //bInstall: false
+        //          Self-uninstalling Wolframcarbid
+        public CWcService(bool bInstall)
+        {
+            try
+            {
+                if (bInstall)
+                {
+                    Trace.WriteLine("Prepare to install");
+                    ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
+                }
+                else
+                {
+
+                    Trace.WriteLine("Prepare to uninstall");
+                    ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An exception was thrown during service uninstallation:\n" + e.ToString());
+            }
+        }
+
+        public CWcService()
+        {
+            //nothing here, just an polymorphism constructor to be different from CWcService(bool bInstall)
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            base.OnStart(args);
+            Trace.WriteLine("OnStart >>>");
+
+            CWcCmdFactory cmdFactory = new CWcCmdFactory();
+            Program.AddCmdHandlerToFactory(cmdFactory);
+
+            CWcCmdCommunication wcfServer = new CWcCmdCommunication();
+            wcfServer.InitWcfServer();
+
+            CWcCmdInvoker.Init(cmdFactory);
+
+            Trace.WriteLine("OnStart <<<");
+        }
+
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -20,14 +73,14 @@ namespace Wolframcarbid
             else if (args[0].ToString() == CServiceConstants.SERVICE_MODE)
             {
                 //service mode
-                Trace.WriteLine("Service Mode");
+                Trace.WriteLine("Process Service Mode");
                 CWcService wcService = new CWcService();
 
                 ServiceBase.Run(wcService);
             }
             else
             {
-                Trace.WriteLine("User Input.");
+                Trace.WriteLine("Process User Input");
                 CWcCommand wcCmd = new CWcCommand(args);
 
                 if (wcCmd.IsWellFormed())
@@ -54,7 +107,7 @@ namespace Wolframcarbid
                 Console.WriteLine(element);
         }
 
-        private static void AddCmdHandlerToFactory(CWcCmdFactory cmdFactory)
+        public static void AddCmdHandlerToFactory(CWcCmdFactory cmdFactory)
         {
             cmdFactory.RegisterHandler(CCmdConstants.CMD_INST_SVC_NAME, new CInstSvcCmdHandler());
         }

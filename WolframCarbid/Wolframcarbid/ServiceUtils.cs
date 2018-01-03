@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration.Install;
-using System.Reflection;
 using System.ServiceProcess;
 using System.ComponentModel;
 using System.Collections;
@@ -27,6 +26,7 @@ namespace Wolframcarbid
         {
             BeforeInstall += new InstallEventHandler(BeforeInstallEventHandler);
             BeforeUninstall += new InstallEventHandler(BeforeUninstallEventHandler);
+            AfterInstall += new InstallEventHandler(AfterInstallEventHandler);
 
             m_bInitialized = false;
         }
@@ -94,31 +94,26 @@ namespace Wolframcarbid
                 Init();
             }
         }
-    }
 
-    public class CWcService : ServiceBase
-    {
-        //bInstall: true
-        //          Self-installing Wolframcarbid
-        //bInstall: false
-        //          Self-uninstalling Wolframcarbid
-        public CWcService(bool bInstall)
+        private void AfterInstallEventHandler(object sender, InstallEventArgs e)
         {
-            if (bInstall)
-                ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
-            else
-                ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
-        }
+            //https://stackoverflow.com/questions/1036713/automatically-start-a-windows-service-on-install/14162063#14162063
+            //ServiceController theSC = new ServiceController(CServiceConstants.SERVICE_DISPLAY_NAME);
 
-        public CWcService()
-        {
+            //if (theSC.Status.Equals(ServiceControllerStatus.Stopped))
+            //{
+            //    theSC.Start();
+            //}
 
-        }
+            //Somehow, above solution causes exception, so I use this one as alternative
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.FileName = "cmd.exe";
+            startInfo.Arguments = "/C net start " + CServiceConstants.SERVICE_NAME;
 
-        protected override void OnStart(string[] args)
-        {
-            base.OnStart(args);
-            Trace.WriteLine("OnStart.");
+            Process process = new Process();
+            process.StartInfo = startInfo;
+            process.Start();
         }
     }
 }

@@ -52,6 +52,12 @@ namespace Wolframcarbid
 
         protected override void RetrieveCmdParam(string cmdName)
         {
+            if (m_bValid)
+            {
+                Trace.WriteLine("Already has parameters.");
+                return;
+            }
+
             if((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
                 Trace.WriteLine("Bad command inputs.");
