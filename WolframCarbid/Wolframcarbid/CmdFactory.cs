@@ -48,6 +48,7 @@ namespace Wolframcarbid
 
         public static void Init(CWcCmdFactory cmdFactory)
         {
+            Trace.WriteLine("CWcCmdInvoker::Init >>>");
             m_cmdFactory = cmdFactory;
         }
 
@@ -77,13 +78,29 @@ namespace Wolframcarbid
             return bSelfSustained;
         }
 
-        public static void IssueSelfSustainedCmdToHandler(CWcCommand wcCmd, ref ErroCodes nRetCode)
+        public static string FowardCmdToMasterService(CWcCommand wcCmd)
+        {
+            CWcfCommunication wcfClient = new CWcfCommunication();
+            return wcfClient.SendAndRecv(wcCmd.GetRawCmd());
+        }
+
+        public static void IssueSelfSustainedCmdToHandler(CWcCommand wcCmd, ref ErrorCodes nRetCode)
         {
             CAbstractCmdHandler cmdHndler = m_cmdFactory.GetCmdHndler(wcCmd);
 
             if (cmdHndler != null)
             {
                 nRetCode = cmdHndler.ProcessSelfSustainedCmd();
+            }
+        }
+
+        public static void IssueSlaveryCmdToCmdHandler(CWcCommand wcCmd, ref string strResMsg, ref ErrorCodes nRetCode)
+        {
+            CAbstractCmdHandler cmdHndler = m_cmdFactory.GetCmdHndler(wcCmd);
+
+            if (cmdHndler != null)
+            {
+                nRetCode = cmdHndler.ProcessSlaveryCmd(wcCmd, ref strResMsg);
             }
         }
 

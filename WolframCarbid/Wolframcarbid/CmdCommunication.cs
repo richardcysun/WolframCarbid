@@ -13,30 +13,52 @@ namespace Wolframcarbid
     public interface IWolframCarbidService
     {
         [OperationContract]
-        string Command(string value);
+        string Command(string[] strValues);
     }
 
     public class WolframCarbidService : IWolframCarbidService
     {
-        public string Command(string value)
+        public string Command(string[] strValues)
         {
-            string strRet = "I got your back";
+            ErrorCodes nRetCode = ErrorCodes.ERR_NOT_IMP;
+            CWcCommand wcCmd = new CWcCommand(strValues);
+
+            string strRet = "";
+            CWcCmdInvoker.IssueSlaveryCmdToCmdHandler(wcCmd, ref strRet, ref nRetCode);
+
             return strRet;
         }
     }
 
-    class CWcCmdCommunication
+    class CWcfCommunication
     {
+        private ServiceHost m_wcfHost;
+
         public void InitWcfServer()
         {
             Trace.WriteLine("InitWcfServer >>>");
             //https://web.archive.org/web/20141027055124/http://tech.pro/tutorial/855/wcf-tutorial-basic-interprocess-communication
             Uri baseAddress = new Uri("net.pipe://localhost");
-            ServiceHost wcfHost = new ServiceHost(typeof(WolframCarbidService), baseAddress);
+            m_wcfHost = new ServiceHost(typeof(WolframCarbidService), baseAddress);
 
-            wcfHost.AddServiceEndpoint(typeof(IWolframCarbidService), new NetNamedPipeBinding(), "Command");
-            wcfHost.Open();
+            m_wcfHost.AddServiceEndpoint(typeof(IWolframCarbidService), new NetNamedPipeBinding(), "Command");
+            m_wcfHost.Open();
             Trace.WriteLine("InitWcfServer <<<");
+        }
+
+        public void DeinitWcfServer()
+        {
+            m_wcfHost.Close();
+        }
+
+        public string SendAndRecv(string[] strCmd)
+        {
+            ChannelFactory<IWolframCarbidService> pipeFactory =
+                new ChannelFactory<IWolframCarbidService>(new NetNamedPipeBinding(), new EndpointAddress("net.pipe://localhost/Command"));
+
+            IWolframCarbidService pipeClient = pipeFactory.CreateChannel();
+
+            return pipeClient.Command(strCmd);
         }
     }
 }

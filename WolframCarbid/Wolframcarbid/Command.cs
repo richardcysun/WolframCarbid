@@ -32,6 +32,11 @@ namespace Wolframcarbid
             return m_strCmdName;
         }
 
+        public string[] GetRawCmd()
+        {
+            return m_strRawCmd;
+        }
+
         private void Parse()
         {
             Dictionary<string, string> dictNameValuePair = new Dictionary<string, string>();

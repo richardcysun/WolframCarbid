@@ -12,6 +12,8 @@ namespace Wolframcarbid
 {
     public class CWcService : ServiceBase
     {
+        CWcfCommunication m_wcfServer;
+
         //bInstall: true
         //          Self-installing Wolframcarbid
         //bInstall: false
@@ -51,14 +53,20 @@ namespace Wolframcarbid
             CWcCmdFactory cmdFactory = new CWcCmdFactory();
             Program.AddCmdHandlerToFactory(cmdFactory);
 
-            CWcCmdCommunication wcfServer = new CWcCmdCommunication();
-            wcfServer.InitWcfServer();
+            m_wcfServer = new CWcfCommunication();
+            m_wcfServer.InitWcfServer();
 
             CWcCmdInvoker.Init(cmdFactory);
 
             Trace.WriteLine("OnStart <<<");
         }
 
+        protected override void OnStop()
+        {
+            base.OnStop();
+
+            m_wcfServer.DeinitWcfServer();
+        }
     }
 
     class Program
@@ -110,8 +118,13 @@ namespace Wolframcarbid
         public static void AddCmdHandlerToFactory(CWcCmdFactory cmdFactory)
         {
             cmdFactory.RegisterHandler(CCmdConstants.CMD_INST_SVC_NAME, new CInstSvcCmdHandler());
+            cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SVC_NAME, new CCtrlSvcCmdHandler());
+            cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SLAVE_SVC_NAME, new CCtrlSlaveSvcCmdHandler());
         }
 
+        //In C++, using call by reference should be a better approach in term of performance.
+        //However, in the CLR, according to community forum, the call by reference seems to be
+        //only used when you need changed value in called function.
         private static void ProcessUserInputs(CWcCommand wcCmd)
         {
             Trace.WriteLine("ProcessUserInputs >>>");
@@ -125,7 +138,7 @@ namespace Wolframcarbid
             {
                 if (CWcCmdInvoker.IsSelfSusatinedCommand(wcCmd))
                 {
-                    ErroCodes nRetCode = ErroCodes.ERR_UNDEFINED;
+                    ErrorCodes nRetCode = ErrorCodes.ERR_UNDEFINED;
                     CWcCmdInvoker.IssueSelfSustainedCmdToHandler(wcCmd, ref nRetCode);
 
                     string strMsg = string.Format("The result of command({0}) is {1}", wcCmd.GetCmdName(), nRetCode);
@@ -133,6 +146,8 @@ namespace Wolframcarbid
                 }
                 else
                 {
+                    string strResMsg = CWcCmdInvoker.FowardCmdToMasterService(wcCmd);
+                    Console.WriteLine(strResMsg);
                 }
             }
             else
