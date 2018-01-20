@@ -42,24 +42,74 @@ In addition, there is a debatable issue for singleton design pattern. In C++ pro
 這一點比較有爭議些，不過還是列下來。Singleton 是個在 C++ 上面常用，確保 instance 唯一性的模型，但是在 C# 中，有了 static class，Singleton 在有存在意義嗎?
 
 ## Features and Design Models
-Now let’s get back to technical factors. The Wolframcarbid provides following facilities and design models which are frequently used in my programming career.
+Now let’s get back to technical factors. The Wolframcarbid provides following design models which are frequently used in my programming career. In addition, I also forge some C# examples and related .NET classes in this list. 
+
+以下介紹在 Wolframcarbid 專案中，個人於工作中常使用的模型。另外也註記相關 Example 以及使用到的 .NET Class。
 
 ### Command-Line Interface
-It defines a form and provides a fundamental syntax parser. The parameters can be mandatory or optional.
+It defines a form and provides a fundamental syntax parser. The parameters can be mandatory or optional. There are two types of commands, self-sustained or master/slave model. Self-sustained command is managed by single Wolframcarbid process. As for master/slave model, it involves  Wolframcarbid  command invoker, Wolframcarbid system service and Wolframcarbid worker and it can do business in system privilege. Will explain more details in Master/Slave section.
+
+提供命令列的語法檢查，命令參數可以是選擇或強制的。命令性質有兩種，自給自足型或是主人奴隸型。自給自足型的命令可在單一 Wolframcarbid 完成所有工作。主人奴隸型命令則仰賴 Wolframcarbid  command invoker/Wolframcarbid system service/Wolframcarbid worker 三者合作，可以系統權限工作。
+
 ```
 Wolframcarbid.exe -wc=cmd_name -param1=value1 -param2=value2
 ```
+:notebook: Dictionary<TKey, TValue> Class
 
 ### Self-installing Windows Service
 By command “install”, Wolframcarbid.exe can install itself as a Windows System Service. The Wolframcarbid.exe is capable of operating tasks in long term duration either periodically or event driven.
 
+可自我安裝成 Windows System Service，提供長效型的工作平台。
+
+```
+Wolframcarbid.exe -wc=inst
+```
+:notebook: Installer Class
+:notebook: ServiceProcessInstaller Class
+:notebook: ServiceInstaller Class
+:notebook: RegistryKey Class
+
 ### Command Handler
 Command Hanlder is derived from famouse CQRS (Command Query Role Separation) model. In Wolframcarbid, every command are managed by a delegated command handler. It highly concentrates specific business logics into a single handler class. This allow developers to effectively insert a new command or remove an obsolete command. 
+
+建構發源自 CQRS 概念的 Command Handler，此處用途雖然與 CQRS 的初衷頗有不同，不過此模型可以確保每種命令與對應處理元件都是分工明確的，維持整體架構的簡潔與優雅。
+
+:notebook: Dictionary<TKey, TValue> Class
 
 ### Master/Slave Model
 For every daemon service, inevitably, the resource leak is the biggest pain and suffering. The msater/slave is the one of the solutions to reduce potential leaks. Take Windows IIS as example, the IIS service doesn’t handle any incoming request in its own regime. Instead, it forks at least one w3wp.exe worker process to handle HTTP requests. Wolframcarbid deploys the similar strategy, the Wolframcarbid service doesn’t manage tasks by itself, it forks Wolframcarbid worker process to manage any request. This model keeps the Wolframcarbid to be resource leak free for a very long duration.
 
+只要是常駐型的系統，運行時日一久難免面臨資源洩漏問題。以 IIS 為例，解決方案之一就是派出  工人 w3wp.exe 應對服務需求。Wolframcarbid 也提供類似的模型，凡是需要 Wolframcarbid Service 協助的命令，均由 Wolframcarbid Worker 出面打發。
+
+:notebook: Process Class
+:notebook: ProcessStartInfo Class
+
+### Start/Stop Windows System Service
+This feature is simply an example about how to use C# to manage Windows System Service
+簡單的小範例，實驗如何用 C# 控制 Windows System Service。
+
+```
+Wolframcarbid.exe -wc=ctrl -act={start | stop} -svc={name}
+```
+
+:notebook: ServiceController Class
+
+### New Tapei City Bus Arrival Time Query
+
+This feature is simply an example about how to use C# to create a HTTP Client and how to manage JSON data.
+
+查詢新北市公車到站時間，這也是個實驗，練習如何用 C# 開啟 HTTP Client 以及如何解析 JSON 資料。
+
+```
+Wolframcarbid.exe -wc=bus -stop={stop_name} -bound={in | out}
+```
+
+:notebook: HttpClient Class
+:notebook: HttpResponseMessage Class
+:notebook: Jvalue Class
+
 Richard, Chih-Yao Sun
+
 Taipei (台北)
 
 
