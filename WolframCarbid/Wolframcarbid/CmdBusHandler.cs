@@ -212,15 +212,15 @@ namespace Wolframcarbid
                             Console.WriteLine(strMsg);
                         }
                         else if (nMin == -1)
-                            Console.WriteLine("尚未發車");
+                            Console.WriteLine("Not Departed");
                         else if (nMin == -2)
-                            Console.WriteLine("交管不停靠");
+                            Console.WriteLine("Non-Stop");
                         else if (nMin == -3)
-                            Console.WriteLine("末班車已過");
+                            Console.WriteLine("Off Duty");
                         else if (nMin == -4)
-                            Console.WriteLine("今日未營運");
+                            Console.WriteLine("Out-of-Service");
                         else
-                            Console.WriteLine("狀況不明");
+                            Console.WriteLine("Undefined");
                     }
                 }
                 catch (Exception e)

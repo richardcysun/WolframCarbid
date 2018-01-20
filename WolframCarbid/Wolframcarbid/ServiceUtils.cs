@@ -98,7 +98,7 @@ namespace Wolframcarbid
         private void AfterInstallEventHandler(object sender, InstallEventArgs e)
         {
             //https://stackoverflow.com/questions/1036713/automatically-start-a-windows-service-on-install/14162063#14162063
-            ServiceController theSC = new ServiceController(CServiceConstants.SERVICE_DISPLAY_NAME);
+            //ServiceController theSC = new ServiceController(CServiceConstants.SERVICE_DISPLAY_NAME);
 
             //if (theSC.Status.Equals(ServiceControllerStatus.Stopped))
             //{
