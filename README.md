@@ -4,11 +4,19 @@ Welcome to Wolframcarbid!
  
 As a Windows C/C++ developer for more than 15 years, I rarely have opportunities to develop C# programs. Therefore I begin to forge this afterwork side project, and it's intended to enrich my implementation experiences in term of C# language skills, Common Language Runtime knoweldges and .NET class libraries familiarity.
  
-The common "Hello World" project is too amatuer to be a start up project, thus I simply rebuild some of my frequently used design patterns and application model in this C# project.
+The common "Hello World" project is too amatuer to be a start up project, thus I simply rebuild some of my frequently used design patterns and application model in this C# project. Furthermore, I also leverage this project as a C# sample codes repository, not only for self-use, but also a feedback to programming community.
  
 This **“Wolframcarbid”** project is a command-line interface application, and it provides a command handler model and master-slave architecture. I call this project "Wolframcarbid" (it's a German vocabulary and it means Tungsten Carbide) because the original C++ project is called "Wolfram" and this "Wolframcarbid" is conceptually derived from “Wolfram”.
  
 At this point, though there are something I still want to forge, this project has roughly accomplished some main feature sets I plan to deploy. Before I drill down the technical characteristics, I prefer to note some C# development experiences by comparing with C/C++.
+
+在Windows 世界裡，用 C/C++ 耕田種地十餘年，一直苦無機會撰寫 C# 程式。最近於工作之餘，開發了這個專案，想要藉此體會一下 C# 實作心得，順便了解 Common Language Runtime 以及 .NET 類別庫。
+
+尋常 "Hello World" 無太多可著墨之處， 所以敝人將一些工作上常用的開發樣板以及模型，以 C# 具體實踐。某種程度而言，也把這個專案當成是 C# Sample Codes 的累積，以備將來不時之需，同時也提供給社群分享。
+
+Wolframcarbid 專案是個提供命令列框架的工具程式，它同時也具備了 Command Handler 模型及 Master/Slave 架構。稱本專案為 Wolframcarbid (德文，碳化鎢) 是因為其概念衍生自本人使用的另個 C++ 專案 Wolfram (德文，鎢)。 
+
+此時雖然還有一些想作但未完成的實作，不過具體框架也算粗略完成。不過在介紹技術特徵前，還是先來說一下 C/C++ 與  C# 的相異之處。
 
 ## C/C++ vs. C#
 ### Learning Curve
@@ -17,11 +25,21 @@ To be a qualified Windows C/C++ programmer, the beginners not only have to under
 
 On the contray, C# beginner only has to worry about object-oriented design and relative models, maybe plus a bit call by reference concepts. With strong support of .NET class libraries, even beginners can build up a fancy Windows application with C#.
 
+如同眾多語言論壇所言，C# 的學習曲線，確實比 C/C++ 和緩許多。要成為一位稱職的 C/C++ 寫手，除了基本語法理解及物件導向觀念外，對於處理器架構，記憶體管理，Windows 平台特徵，甚至 C/C++ 的編譯器及連結器設計概念，都要有相當理解。過了兩三年之後，才有機會寫出一套可長期運作，而且臭蟲稍少的程式。
+
+另一方面， C# 的寫手確實只要面對物件導向的設計規劃，外帶一些對於 call-by-reference 的理解即可。在 .NET 程式庫的支援下，真的可以比較容易發展出一套商業運轉軟體。
+
 ### Implementation Philosophy
 Another interesting differences between C/C++ and C# is a implementation philosophy. In this project, it offers a self-installing capability. In Windows C/C++ implementation, calling several Win32 API's can easily achieve this job. However, there is no such low-level API to use and I’ve wasted quite a long time to search and study those secret C# API. Finally, I realize that I shouldn’t think of C# as a low-level machine, I should elaborate C# codes in a more human nature fashion. At that moment, I felt totally comfortable to use ManagedInstallerClass(), just like what InstallUtil.exe will do.
 
+C/C++ 與 C# 在實作心態上，的確大不相同。C/C++ 寫久了，碰到問題就很習慣性的往底層鑽。以專案中的自我安裝功能為例，用 C/C++開發，只要若干個 Win32 API 兜在一起，就可以在簡短時間內完成。
+
+可是 C# 不提供這麼底層的類別庫，當初為了找到 C# 實作的底層方法，著實花了不少時間。後來看了不少討論，才理解到 C# 開發要以人類自然思維為主，才找到如同與 InstallUtil.exe 相同的 ManagedInstallerClass()。
+
 ### Singleton?
 In addition, there is a debatable issue for singleton design pattern. In C++ programming, the singleton is a good approach to ensure single instance. However, since C# provide static class globally, maybe singleton in C# is a bad smell. Honestly I’m not quite sure about it, just leave a note here.
+
+這一點比較有爭議些，不過還是列下來。Singleton 是個在 C++ 上面常用，確保 instance 唯一性的模型，但是在 C# 中，有了 static class，Singleton 在有存在意義嗎?
 
 ## Features and Design Models
 Now let’s get back to technical factors. The Wolframcarbid provides following facilities and design models which are frequently used in my programming career.
