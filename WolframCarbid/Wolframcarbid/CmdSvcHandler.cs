@@ -33,7 +33,7 @@ namespace Wolframcarbid
         protected abstract void RetrieveCmdParam(string cmdName);
     }
 
-    //User -> WolCarbid.exe (admin)
+    //User -> WolCarbid.exe (local admin)
     //           ^
     //           |
     //   CInstSvcCmdHandler runs here
@@ -63,7 +63,7 @@ namespace Wolframcarbid
                 return;
             }
 
-            if((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
+            if ((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
                 Trace.WriteLine("Bad command inputs.");
                 return;
@@ -116,7 +116,7 @@ namespace Wolframcarbid
     }
 
     //User -> WolCarbid.exe (invoker) -> WolCarbid.exe (master) -> WolCarbid.exe (slave)
-    //                                      ^
+    //                     normal user      ^
     //                                      |
     //                              CCtrlSvcCmdHandler runs here
     //                              to fork slave
@@ -210,7 +210,7 @@ namespace Wolframcarbid
                 Process.Start(processInfo);
                 strResMsg = "WolframCarbid service has successfully launched slavery process.";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_LAUNCH_PROC;
                 Console.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
@@ -231,7 +231,7 @@ namespace Wolframcarbid
     }
 
     //User -> WolCarbid.exe (invoker) -> WolCarbid.exe (master) -> WolCarbid.exe (slave)
-    //                                                                ^
+    //                                                                ^        system account
     //                                                                |
     //                                                        CCtrlSlaveSvcCmdHandler runs here
     //                                                        to start/stop service
