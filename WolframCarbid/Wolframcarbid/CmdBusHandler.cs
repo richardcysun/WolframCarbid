@@ -140,11 +140,12 @@ namespace Wolframcarbid
 
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
-            ErrorCodes nRetCode = ErrorCodes.ERR_NOT_IMP;
+            ErrorCodes nRetCode = ErrorCodes.SUCCESS;
             bool bFound = false;
             string strRouteId = "";
             string strStopId = "", strGoBack = "", strEstimate = "";
 
+            //Get Route ID based on Route Name
             string strRouteRet = GetRouteIdAsync(m_strRouteName).GetAwaiter().GetResult();
             try
             {
@@ -152,13 +153,22 @@ namespace Wolframcarbid
                 {
                     dynamic jsonRoute = JValue.Parse(strRouteRet);
                     strRouteId = jsonRoute[0].Id;
+                    bFound = true;
+                }
+                else
+                {
+                    nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
+                    Console.WriteLine("Unable to retrieve route ID from Web Source\n");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
+                Console.WriteLine("An exception was thrown during json parsing: " + e.ToString());
             }
+
+            if (!bFound)
+                return nRetCode;
 
             string strStopRet = GetStopIdAsync(strRouteId, m_strStopName).GetAwaiter().GetResult();
             try
@@ -178,8 +188,10 @@ namespace Wolframcarbid
                         jsonStop = JValue.Parse(strStopRet)[0].Next;
                         if (!bFound && (jsonStop != null))
                         {
-                            strStopId = jsonStop.Id;
-                            strGoBack = jsonStop.goBack;
+                            if (jsonStop.Id != null)
+                                strStopId = jsonStop.Id;
+                            if (jsonStop.goBack != null)
+                                strGoBack = jsonStop.goBack;
                             if ((m_bInBound && (strGoBack.CompareTo("1") == 0)) || (!m_bInBound && (strGoBack.CompareTo("0") == 0)))
                             {
                                 //It should be true, but in case
@@ -188,6 +200,11 @@ namespace Wolframcarbid
                         }
                     }
                 }
+                else
+                {
+                    nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
+                    Console.WriteLine("Unable to retrieve stop ID from Web Source\n");
+                }
             }
             catch (Exception e)
             {
@@ -195,45 +212,46 @@ namespace Wolframcarbid
                 Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
             }
 
-            if (bFound)
-            {
-                string strEtaRet = GetStopEtaAsync(strRouteId, strStopId).GetAwaiter().GetResult();
-                try
-                {
-                    if (strEtaRet.Length > 0)
-                    {
-                        dynamic jsonEta = JValue.Parse(strEtaRet);
-                        strEstimate = jsonEta[0].EstimateTime;
-                        int nMin = Int32.Parse(strEstimate);
+            if (!bFound)
+                return nRetCode;
 
-                        if (nMin > 0)
-                        {
-                            string strMsg = "Estimate arrival time: " + (nMin/60) + " min.";
-                            Console.WriteLine(strMsg);
-                        }
-                        else if (nMin == -1)
-                            Console.WriteLine("Not Departed");
-                        else if (nMin == -2)
-                            Console.WriteLine("Non-Stop");
-                        else if (nMin == -3)
-                            Console.WriteLine("Off Duty");
-                        else if (nMin == -4)
-                            Console.WriteLine("Out-of-Service");
-                        else
-                            Console.WriteLine("Undefined");
-                    }
-                }
-                catch (Exception e)
-                {
-                    nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                    Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
-                }
-            }
-            else
+            string strEtaRet = GetStopEtaAsync(strRouteId, strStopId).GetAwaiter().GetResult();
+            try
             {
-                nRetCode = ErrorCodes.UNABLE_TO_FIND_DATA;
-                Console.WriteLine("Unable to retrieve arrival time!");
+                if (strEtaRet.Length > 0)
+                {
+                    dynamic jsonEta = JValue.Parse(strEtaRet);
+                    strEstimate = jsonEta[0].EstimateTime;
+                    int nMin = Int32.Parse(strEstimate);
+
+                    if (nMin > 0)
+                    {
+                        string strMsg = "Estimate arrival time: " + (nMin / 60) + " min.";
+                        Console.WriteLine(strMsg);
+                    }
+                    else if (nMin == -1)
+                        Console.WriteLine("Not Departed");
+                    else if (nMin == -2)
+                        Console.WriteLine("Non-Stop");
+                    else if (nMin == -3)
+                        Console.WriteLine("Off Duty");
+                    else if (nMin == -4)
+                        Console.WriteLine("Out-of-Service");
+                    else
+                        Console.WriteLine("Undefined");
+                }
+                else
+                {
+                    nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
+                    Console.WriteLine("Unable to retrieve stop ETA from Web Source\n");
+                }
             }
+            catch (Exception e)
+            {
+                nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
+                Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
+            }
+
             return nRetCode;
         }
 

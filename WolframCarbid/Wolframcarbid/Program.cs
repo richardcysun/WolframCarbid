@@ -104,10 +104,11 @@ namespace Wolframcarbid
         {
             string[] szMsg = {
                 "Usage:\n",
-                "      example: \"Wolframcarbid.exe -wc=qry -svc=EFS \"\n",
+                "      example: \"Wolframcarbid.exe -wc=ctrl -svc=EFS \"\n",
                 "      Self-Sustained Commands:",
                 "      -wc=inst (Admin privilege, register tool as a Windows Service)",
-                "      -wc=bus (normal user privilege, query Bus status)\n",
+                "      -wc=bus (normal user privilege, query bus status)",
+                "      -wc=pm25 (normal user privilege, query particulate matter data)\n",
                 "      Master-Slave Commands (must run \"inst\" command in the first place):",
                 "      -wc=ctrl (normal user privilege, but can start/stop specific Service)\n" };
 
@@ -121,6 +122,7 @@ namespace Wolframcarbid
             cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SVC_NAME, new CCtrlSvcCmdHandler());
             cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SLAVE_SVC_NAME, new CCtrlSlaveSvcCmdHandler());
             cmdFactory.RegisterHandler(CCmdConstants.CMD_BUS_NAME, new CBusCmdHandler());
+            cmdFactory.RegisterHandler(CCmdConstants.CMD_PM25_NAME, new CmdPM25CmdHandler());
         }
 
         //In C++, using call by reference should be a better approach in term of performance.
