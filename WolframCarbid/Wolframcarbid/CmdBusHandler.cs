@@ -149,10 +149,12 @@ namespace Wolframcarbid
             string strRouteRet = GetRouteIdAsync(m_strRouteName).GetAwaiter().GetResult();
             try
             {
-                if (strRouteRet.Length > 0)
+                //The response data is a JSON array
+                JArray jArr = (JArray)JsonConvert.DeserializeObject(strRouteRet);
+
+                if ((jArr != null) && (jArr[0]["Id"] != null))
                 {
-                    dynamic jsonRoute = JValue.Parse(strRouteRet);
-                    strRouteId = jsonRoute[0].Id;
+                    strRouteId = (string)jArr[0]["Id"];
                     bFound = true;
                 }
                 else
@@ -170,31 +172,33 @@ namespace Wolframcarbid
             if (!bFound)
                 return nRetCode;
 
+            bFound = false;//reset bFound for next incoming data
             string strStopRet = GetStopIdAsync(strRouteId, m_strStopName).GetAwaiter().GetResult();
             try
             {
-                if (strStopRet.Length > 0)
+                JArray jArr = (JArray)JsonConvert.DeserializeObject(strStopRet);
+
+                if ((jArr != null) && (jArr[0]["goBack"] != null))
                 {
-                    dynamic jsonStop = JValue.Parse(strStopRet)[0];
-                    strStopId = jsonStop.Id;
-                    strGoBack = jsonStop.goBack;
+                    strGoBack = (string)jArr[0]["goBack"];
 
                     if ((m_bInBound && (strGoBack.CompareTo("1") == 0)) || (!m_bInBound && (strGoBack.CompareTo("0") == 0)))
                     {
-                        bFound = true;
-                    }
-                    else
-                    {
-                        jsonStop = JValue.Parse(strStopRet)[0].Next;
-                        if (!bFound && (jsonStop != null))
+                        if (jArr[0]["Id"] != null)
                         {
-                            if (jsonStop.Id != null)
-                                strStopId = jsonStop.Id;
-                            if (jsonStop.goBack != null)
-                                strGoBack = jsonStop.goBack;
-                            if ((m_bInBound && (strGoBack.CompareTo("1") == 0)) || (!m_bInBound && (strGoBack.CompareTo("0") == 0)))
+                            strStopId = (string)jArr[0]["Id"];
+                            bFound = true;
+                        }
+                    }
+                    else if (jArr[1]["goBack"] != null)
+                    {
+                        strGoBack = (string)jArr[1]["goBack"];
+
+                        if ((m_bInBound && (strGoBack.CompareTo("1") == 0)) || (!m_bInBound && (strGoBack.CompareTo("0") == 0)))
+                        {
+                            if (jArr[1]["Id"] != null)
                             {
-                                //It should be true, but in case
+                                strStopId = (string)jArr[1]["Id"];
                                 bFound = true;
                             }
                         }
@@ -218,10 +222,11 @@ namespace Wolframcarbid
             string strEtaRet = GetStopEtaAsync(strRouteId, strStopId).GetAwaiter().GetResult();
             try
             {
-                if (strEtaRet.Length > 0)
+                JArray jArr = (JArray)JsonConvert.DeserializeObject(strEtaRet);
+
+                if ((jArr != null) && (jArr[0]["EstimateTime"] != null))
                 {
-                    dynamic jsonEta = JValue.Parse(strEtaRet);
-                    strEstimate = jsonEta[0].EstimateTime;
+                    strEstimate = (string)jArr[0]["EstimateTime"];
                     int nMin = Int32.Parse(strEstimate);
 
                     if (nMin > 0)

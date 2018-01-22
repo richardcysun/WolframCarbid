@@ -76,54 +76,59 @@ namespace Wolframcarbid
 
             try
             {
-                string strRouteId_URI = "https://pm25.lass-net.org/data/last-all-epa.json";
-                WebClient webClient = new WebClient();
-                webClient.DownloadFile(strRouteId_URI, m_strDlFile);
+                //string strRouteId_URI = "https://pm25.lass-net.org/data/last-all-epa.json";
+                //WebClient webClient = new WebClient();
+                //webClient.DownloadFile(strRouteId_URI, m_strDlFile);
 
                 StreamReader stmReader = new StreamReader(m_strDlFile);
-                string json = stmReader.ReadToEnd();
+                string strJdata = stmReader.ReadToEnd();
 
-                dynamic epaData = JsonConvert.DeserializeObject(json);
-                dynamic array = epaData.feeds;
-
-                float NO = 0 , NO2 = 0, NOx = 0, AQI = 0;
+                float NO = 0, NO2 = 0, NOx = 0, AQI = 0;
                 float O3 = 0, CO = 0, SO2 = 0;
                 float PM2_5 = 0, PM10 = 0;
                 float WindSpeed = 0, WindDirec = 0;
                 string strTimeStamp;
-                foreach (var item in array)
-                {
-                    string strSite = item.SiteEngName;
-                    if (m_strLocation.CompareTo(strSite) == 0)
-                    {
-                        if (item.NO != null)
-                            NO = item.NO;
-                        if (item.NO2 != null)
-                            NO2 = item.NO2;
-                        if (item.NOx != null)
-                            NOx = item.NOx;
-                        if (item.AQI != null)
-                            AQI = item.AQI;
-                        if (item.CO != null)
-                            CO = item.CO;
-                        if (item.SO2 != null)
-                            SO2 = item.SO2;
-                        if (item.O3 != null)
-                            O3 = item.O3;
-                        if (item.PM2_5 != null)
-                            PM2_5 = item.PM2_5;
-                        if (item.PM10 != null)
-                            PM10 = item.PM10;
-                        if (item.WindSpeed != null)
-                            WindSpeed = item.WindSpeed;
-                        if (item.WindDirec != null)
-                            WindDirec = item.WindDirec;
-                        if (item.timestamp != null)
-                            strTimeStamp = item.timestamp;
-                        break;
-                    }
-                }
 
+                JObject jEpaData = (JObject)JsonConvert.DeserializeObject(strJdata);
+                JArray jArr = (JArray)jEpaData["feeds"];
+
+                foreach (JObject jObj in jArr.Children<JObject>())
+                {
+                    if (jObj["SiteEngName"] != null)
+                    {
+                        if (m_strLocation.CompareTo((string)jObj["SiteEngName"]) != 0)
+                            continue;
+                    }
+                    else
+                        continue;
+
+                    if (jObj["NO"] != null)
+                        NO = (float)jObj["NO"];
+                    if (jObj["NO2"] != null)
+                        NO2 = (float)jObj["NO2"];
+                    if (jObj["NOx"] != null)
+                        NOx = (float)jObj["NOx"];
+                    if (jObj["AQI"] != null)
+                        AQI = (float)jObj["AQI"];
+                    if (jObj["CO"] != null)
+                        CO = (float)jObj["CO"];
+                    if (jObj["SO2"] != null)
+                        SO2 = (float)jObj["SO2"];
+                    if (jObj["O3"] != null)
+                        O3 = (float)jObj["O3"];
+                    if (jObj["SO2"] != null)
+                        SO2 = (float)jObj["SO2"];
+                    if (jObj["PM2_5"] != null)
+                        PM2_5 = (float)jObj["PM2_5"];
+                    if (jObj["PM10"] != null)
+                        PM10 = (float)jObj["PM10"];
+                    if (jObj["WindSpeed"] != null)
+                        WindSpeed = (float)jObj["WindSpeed"];
+                    if (jObj["WindDirec"] != null)
+                        WindDirec = (float)jObj["WindDirec"];
+                    if (jObj["timestamp"] != null)
+                        strTimeStamp = (string)jObj["timestamp"];
+                }
             }
             catch (Exception e)
             {
