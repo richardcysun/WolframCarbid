@@ -213,7 +213,7 @@ namespace Wolframcarbid
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_LAUNCH_PROC;
-                Console.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
                 strResMsg = "WolframCarbid was unable to launch slavery process.";
             }
             return nRetCode;

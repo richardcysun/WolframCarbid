@@ -9,9 +9,27 @@ using Newtonsoft.Json.Linq;
 using System.Net;
 using System.Net.Http;
 using System.IO;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace Wolframcarbid
 {
+    public struct AirPollution
+    {
+        public float AQI;
+        public float NO;
+        public float NO2;
+        public float NOx;
+        public float O3;
+        public float CO;
+        public float SO2;
+        public float PM2_5;
+        public float PM10;
+        public float WindSpeed;
+        public float WindDirec;
+        public string strTimeStamp;
+    }
+
     class CmdPM25CmdHandler : CAbstractCmdHandler
     {
         private string m_strLocation;
@@ -70,27 +88,93 @@ namespace Wolframcarbid
             return ErrorCodes.SUCCESS;
         }
 
+        private bool ExecuteSQLCmd(string strDatabase, string strSqlStatement)
+        {
+            bool bRet = false;
+            string strConnect = "Server=.\\SQLEXPRESS;Trusted_Connection=yes;database=" + strDatabase;
+            SqlConnection sqlConn = new SqlConnection(strConnect);
+            SqlCommand sqlCommand = new SqlCommand(strSqlStatement, sqlConn);
+
+            try
+            {
+                sqlConn.Open();
+                sqlCommand.ExecuteNonQuery();
+                Trace.WriteLine("SQL Staement(" + strSqlStatement + ") is executed successfully");
+                bRet = true;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+            }
+            finally
+            {
+                if (sqlConn.State == ConnectionState.Open)
+                {
+                    sqlConn.Close();
+                }
+            }
+            return bRet;
+        }
+
+        private bool IsDBExisted()
+        {
+            string strStatement = "SELECT * FROM dbo.AirPollution";
+            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+        }
+
+        private bool CreateDatabase()
+        {
+            string strStatement = "CREATE DATABASE Wolframcarbid";
+            return ExecuteSQLCmd(CDataBaseConstants.MSATER_DB, strStatement);
+        }
+
+        private bool CreateTable()
+        {
+            string strStatement = "CREATE TABLE AirPollution" +
+                "(ID int PRIMARY KEY NOT NULL IDENTITY(1,1)," +
+                "AQI FLOAT, NO FLOAT, NO2 FLOAT, NOx FLOAT," +
+                "CO FLOAT, SO2 FLOAT, O3 FLOAT, " +
+                "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime UNIQUE NOT NULL)";
+
+            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+        }
+
+        private bool UpdateDatabase(AirPollution airPollution)
+        {
+            string strStatement = "INSERT INTO AirPollution VALUES (" +
+                airPollution.AQI.ToString() + ", " +
+                airPollution.NO.ToString() + ", " +
+                airPollution.NO2.ToString() + ", " +
+                airPollution.NOx.ToString() + ", " +
+                airPollution.CO.ToString() + ", " +
+                airPollution.SO2.ToString() + ", " +
+                airPollution.O3.ToString() + ", " +
+                airPollution.WindSpeed.ToString() + ", " +
+                airPollution.WindDirec.ToString() + ", " +
+                "'" + airPollution.strTimeStamp + "')";
+            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+        }
+
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
             ErrorCodes nRetCode = ErrorCodes.SUCCESS;
 
             try
             {
-                //string strRouteId_URI = "https://pm25.lass-net.org/data/last-all-epa.json";
-                //WebClient webClient = new WebClient();
-                //webClient.DownloadFile(strRouteId_URI, m_strDlFile);
+                string strRouteId_URI = "https://pm25.lass-net.org/data/last-all-epa.json";
+                WebClient webClient = new WebClient();
+                webClient.DownloadFile(strRouteId_URI, m_strDlFile);
 
                 StreamReader stmReader = new StreamReader(m_strDlFile);
                 string strJdata = stmReader.ReadToEnd();
 
-                float NO = 0, NO2 = 0, NOx = 0, AQI = 0;
-                float O3 = 0, CO = 0, SO2 = 0;
-                float PM2_5 = 0, PM10 = 0;
-                float WindSpeed = 0, WindDirec = 0;
-                string strTimeStamp;
-
                 JObject jEpaData = (JObject)JsonConvert.DeserializeObject(strJdata);
+
+                if (stmReader != null)
+                    stmReader.Close();
+
                 JArray jArr = (JArray)jEpaData["feeds"];
+                AirPollution airPollution = new AirPollution();
 
                 foreach (JObject jObj in jArr.Children<JObject>())
                 {
@@ -103,37 +187,44 @@ namespace Wolframcarbid
                         continue;
 
                     if (jObj["NO"] != null)
-                        NO = (float)jObj["NO"];
+                        airPollution.NO = (float)jObj["NO"];
                     if (jObj["NO2"] != null)
-                        NO2 = (float)jObj["NO2"];
+                        airPollution.NO2 = (float)jObj["NO2"];
                     if (jObj["NOx"] != null)
-                        NOx = (float)jObj["NOx"];
+                        airPollution.NOx = (float)jObj["NOx"];
                     if (jObj["AQI"] != null)
-                        AQI = (float)jObj["AQI"];
+                        airPollution.AQI = (float)jObj["AQI"];
                     if (jObj["CO"] != null)
-                        CO = (float)jObj["CO"];
+                        airPollution.CO = (float)jObj["CO"];
                     if (jObj["SO2"] != null)
-                        SO2 = (float)jObj["SO2"];
+                        airPollution.SO2 = (float)jObj["SO2"];
                     if (jObj["O3"] != null)
-                        O3 = (float)jObj["O3"];
-                    if (jObj["SO2"] != null)
-                        SO2 = (float)jObj["SO2"];
+                        airPollution.O3 = (float)jObj["O3"];
                     if (jObj["PM2_5"] != null)
-                        PM2_5 = (float)jObj["PM2_5"];
+                        airPollution.PM2_5 = (float)jObj["PM2_5"];
                     if (jObj["PM10"] != null)
-                        PM10 = (float)jObj["PM10"];
+                        airPollution.PM10 = (float)jObj["PM10"];
                     if (jObj["WindSpeed"] != null)
-                        WindSpeed = (float)jObj["WindSpeed"];
+                        airPollution.WindSpeed = (float)jObj["WindSpeed"];
                     if (jObj["WindDirec"] != null)
-                        WindDirec = (float)jObj["WindDirec"];
+                        airPollution.WindDirec = (float)jObj["WindDirec"];
                     if (jObj["timestamp"] != null)
-                        strTimeStamp = (string)jObj["timestamp"];
+                        airPollution.strTimeStamp = (string)jObj["timestamp"];
                 }
+
+                if (!IsDBExisted())
+                {
+                    CreateDatabase();
+                    CreateTable();
+                }
+
+                UpdateDatabase(airPollution);
+
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
             }
 
             return nRetCode;

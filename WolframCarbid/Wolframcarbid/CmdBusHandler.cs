@@ -160,13 +160,13 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Console.WriteLine("Unable to retrieve route ID from Web Source\n");
+                    Trace.WriteLine("Unable to retrieve route ID from Web Source\n");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Console.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
             }
 
             if (!bFound)
@@ -207,13 +207,13 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Console.WriteLine("Unable to retrieve stop ID from Web Source\n");
+                    Trace.WriteLine("Unable to retrieve stop ID from Web Source");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
             }
 
             if (!bFound)
@@ -248,13 +248,13 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Console.WriteLine("Unable to retrieve stop ETA from Web Source\n");
+                    Trace.WriteLine("Unable to retrieve stop ETA from Web Source");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Console.WriteLine("An exception was thrown during json parsing:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
             }
 
             return nRetCode;

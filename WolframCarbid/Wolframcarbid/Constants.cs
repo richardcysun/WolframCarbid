@@ -11,7 +11,6 @@ namespace Wolframcarbid
         public const string SERVICE_NAME = "WolframCarbid";
         public const string SERVICE_DISPLAY_NAME = "WolframCarbid Command-Line Interface";
         public const string SERVICE_MODE = "-s";
-
     }
 
     static class CCmdConstants
@@ -46,6 +45,12 @@ namespace Wolframcarbid
         public const string CMD_VALUE_STOP = "stop";
         public const string CMD_VALUE_IN = "in";
         public const string CMD_VALUE_OUT = "out";
+    }
+
+    static class CDataBaseConstants
+    {
+        public const string MSATER_DB = "master";
+        public const string WOLFRAMCARBID_DB = "WolframCarbid";
     }
 
     public enum ErrorCodes : int

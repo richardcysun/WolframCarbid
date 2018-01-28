@@ -75,7 +75,7 @@ namespace Wolframcarbid
             }
             catch (Exception e)
             {
-                Console.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
             }
         }
 
