@@ -11,6 +11,8 @@ using System.Net.Http;
 using System.IO;
 using System.Data;
 using System.Data.SqlClient;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Wolframcarbid
 {
@@ -28,10 +30,12 @@ namespace Wolframcarbid
         public float WindSpeed;
         public float WindDirec;
         public string strTimeStamp;
+        public string strSiteEngName;
     }
 
     class CmdPM25CmdHandler : CAbstractCmdHandler
     {
+        private string m_strDbSource;
         private string m_strLocation;
         private string m_strDlFile;
 
@@ -40,6 +44,8 @@ namespace Wolframcarbid
             //This command can do task by itself
             m_bSelfSustainedCmd = true;
             m_strUsage = CCmdConstants.CMD_PM25_USAGE;
+            m_strDbSource = "";
+            m_strLocation = "";
             m_strDlFile = "epa.json";
         }
 
@@ -88,10 +94,10 @@ namespace Wolframcarbid
             return ErrorCodes.SUCCESS;
         }
 
-        private bool ExecuteSQLCmd(string strDatabase, string strSqlStatement)
+        private bool ExecuteSQLCmdNonQuery(string strDatabase, string strSqlStatement)
         {
             bool bRet = false;
-            string strConnect = "Server=.\\SQLEXPRESS;Trusted_Connection=yes;database=" + strDatabase;
+            string strConnect = "Server=" + m_strDbSource + ";Trusted_Connection=yes;database=" + strDatabase;
             SqlConnection sqlConn = new SqlConnection(strConnect);
             SqlCommand sqlCommand = new SqlCommand(strSqlStatement, sqlConn);
 
@@ -116,32 +122,73 @@ namespace Wolframcarbid
             return bRet;
         }
 
+        private bool ExecuteSQLCmdQuery(string strDatabase, string strSqlStatement, ref bool bHasData)
+        {
+            bool bRet = false;
+            string strConnect = "Server=" + m_strDbSource + ";Trusted_Connection=yes;database=" + strDatabase;
+            SqlConnection sqlConn = new SqlConnection(strConnect);
+            SqlCommand sqlCommand = new SqlCommand(strSqlStatement, sqlConn);
+
+            try
+            {
+                sqlConn.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+                Trace.WriteLine("SQL Staement(" + strSqlStatement + ") is executed successfully");
+                bRet = true;
+
+                if (sqlReader.HasRows)
+                    bHasData = true;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+            }
+            finally
+            {
+                if (sqlConn.State == ConnectionState.Open)
+                {
+                    sqlConn.Close();
+                }
+            }
+            return bRet;
+        }
+
         private bool IsDBExisted()
         {
             string strStatement = "SELECT * FROM dbo.AirPollution";
-            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+        }
+
+        private bool IsRecordExisted(string strSiteEngName, string strTimestamp)
+        {
+            bool bExecuted = false, bHasData = false;
+            string strStatement = "SELECT * FROM dbo.AirPollution WHERE [SiteEngName] = '" + strSiteEngName + "' AND [DataTime] = Convert(datetime, '" + strTimestamp + "')";
+            bExecuted = ExecuteSQLCmdQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement, ref bHasData);
+
+            return (bExecuted && bHasData);
         }
 
         private bool CreateDatabase()
         {
             string strStatement = "CREATE DATABASE Wolframcarbid";
-            return ExecuteSQLCmd(CDataBaseConstants.MSATER_DB, strStatement);
+            return ExecuteSQLCmdNonQuery(CDataBaseConstants.MSATER_DB, strStatement);
         }
 
         private bool CreateTable()
         {
             string strStatement = "CREATE TABLE AirPollution" +
                 "(ID int PRIMARY KEY NOT NULL IDENTITY(1,1)," +
-                "AQI FLOAT, NO FLOAT, NO2 FLOAT, NOx FLOAT," +
+                "SiteEngName NCHAR(32) NOT NULL, AQI FLOAT, NO FLOAT, NO2 FLOAT, NOx FLOAT," +
                 "CO FLOAT, SO2 FLOAT, O3 FLOAT, " +
-                "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime UNIQUE NOT NULL)";
+                "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime NOT NULL)";
 
-            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
         }
 
-        private bool UpdateDatabase(AirPollution airPollution)
+        private bool InsertToDatabase(AirPollution airPollution)
         {
             string strStatement = "INSERT INTO AirPollution VALUES (" +
+                "'" + airPollution.strSiteEngName + "', " +
                 airPollution.AQI.ToString() + ", " +
                 airPollution.NO.ToString() + ", " +
                 airPollution.NO2.ToString() + ", " +
@@ -152,12 +199,14 @@ namespace Wolframcarbid
                 airPollution.WindSpeed.ToString() + ", " +
                 airPollution.WindDirec.ToString() + ", " +
                 "'" + airPollution.strTimeStamp + "')";
-            return ExecuteSQLCmd(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
         }
 
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
             ErrorCodes nRetCode = ErrorCodes.SUCCESS;
+
+            //new XDocument(new XElement("Wolframcarbid", new XElement("DbSource", ".\\SQLEXPRESS") )).Save("Wolframcarbid.xml");
 
             try
             {
@@ -210,7 +259,17 @@ namespace Wolframcarbid
                         airPollution.WindDirec = (float)jObj["WindDirec"];
                     if (jObj["timestamp"] != null)
                         airPollution.strTimeStamp = (string)jObj["timestamp"];
+                    if (jObj["SiteEngName"] != null)
+                        airPollution.strSiteEngName = (string)jObj["SiteEngName"];
                 }
+
+                XmlDocument xmlWC = new XmlDocument();
+                xmlWC.Load("Wolframcarbid.xml");
+                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/DbSource");
+                m_strDbSource = nodeDb.InnerText;
+
+                //XmlNode nodePM25Loc = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/PM25/Location");
+                //nodePM25Loc = nodePM25Loc.NextSibling;
 
                 if (!IsDBExisted())
                 {
@@ -218,7 +277,8 @@ namespace Wolframcarbid
                     CreateTable();
                 }
 
-                UpdateDatabase(airPollution);
+                if (!IsRecordExisted(airPollution.strSiteEngName, airPollution.strTimeStamp))
+                    InsertToDatabase(airPollution);
 
             }
             catch (Exception e)

@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wolframcarbid>
+  <DbSource>.\SQLEXPRESS</DbSource>
+  <PM25>
+    <Location>Datong</Location>
+    <Location>Qianzhen</Location>
+    <Location>Renwu</Location>
+  </PM25>
+</Wolframcarbid>
