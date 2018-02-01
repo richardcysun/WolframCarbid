@@ -31,6 +31,7 @@ namespace Wolframcarbid
         public float WindDirec;
         public string strTimeStamp;
         public string strSiteEngName;
+        public string strSiteName;
     }
 
     class CmdPM25CmdHandler : CAbstractCmdHandler
@@ -38,6 +39,7 @@ namespace Wolframcarbid
         private string m_strDbSource;
         private string m_strLocation;
         private string m_strDlFile;
+        List<string> m_lstLocations;
 
         public CmdPM25CmdHandler()
         {
@@ -178,7 +180,7 @@ namespace Wolframcarbid
         {
             string strStatement = "CREATE TABLE AirPollution" +
                 "(ID int PRIMARY KEY NOT NULL IDENTITY(1,1)," +
-                "SiteEngName NCHAR(32) NOT NULL, AQI FLOAT, NO FLOAT, NO2 FLOAT, NOx FLOAT," +
+                "SiteEngName NCHAR(32) NOT NULL, SiteName NCHAR(16), AQI FLOAT, NO FLOAT, NO2 FLOAT, NOx FLOAT," +
                 "CO FLOAT, SO2 FLOAT, O3 FLOAT, " +
                 "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime NOT NULL)";
 
@@ -189,6 +191,7 @@ namespace Wolframcarbid
         {
             string strStatement = "INSERT INTO AirPollution VALUES (" +
                 "'" + airPollution.strSiteEngName + "', " +
+                "'" + airPollution.strSiteName + "', " +
                 airPollution.AQI.ToString() + ", " +
                 airPollution.NO.ToString() + ", " +
                 airPollution.NO2.ToString() + ", " +
@@ -200,6 +203,36 @@ namespace Wolframcarbid
                 airPollution.WindDirec.ToString() + ", " +
                 "'" + airPollution.strTimeStamp + "')";
             return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+        }
+
+        private void CreateLocationList()
+        {
+            m_lstLocations = new List<string>();
+            if (String.Compare(m_strLocation, "xml", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                //If the location is xml, it means we should refer to Wolframcarbid.xml file for target locations
+                XmlDocument xmlWC = new XmlDocument();
+                xmlWC.Load("Wolframcarbid.xml");
+                XmlNode nodePM25Loc = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/PM25/Location");
+
+                while (nodePM25Loc != null)
+                {
+                    m_lstLocations.Add(nodePM25Loc.InnerText);
+                    nodePM25Loc = nodePM25Loc.NextSibling;
+                }
+            }
+            else
+                m_lstLocations.Add(m_strLocation);
+        }
+
+        private bool CompareLocation(string strEngSiteName)
+        {
+            bool bFound = false;
+            string strSite = m_lstLocations.Find(x => x.Contains(strEngSiteName));
+
+            if (strSite != null)
+                bFound = true;
+            return bFound; 
         }
 
         public override ErrorCodes ProcessSelfSustainedCmd()
@@ -222,6 +255,18 @@ namespace Wolframcarbid
                 if (stmReader != null)
                     stmReader.Close();
 
+                XmlDocument xmlWC = new XmlDocument();
+                xmlWC.Load("Wolframcarbid.xml");
+                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/DbSource");
+                m_strDbSource = nodeDb.InnerText;
+
+                if (!IsDBExisted())
+                {
+                    CreateDatabase();
+                    CreateTable();
+                }
+
+                CreateLocationList();
                 JArray jArr = (JArray)jEpaData["feeds"];
                 AirPollution airPollution = new AirPollution();
 
@@ -229,7 +274,7 @@ namespace Wolframcarbid
                 {
                     if (jObj["SiteEngName"] != null)
                     {
-                        if (m_strLocation.CompareTo((string)jObj["SiteEngName"]) != 0)
+                        if (!CompareLocation((string)jObj["SiteEngName"]))
                             continue;
                     }
                     else
@@ -261,25 +306,14 @@ namespace Wolframcarbid
                         airPollution.strTimeStamp = (string)jObj["timestamp"];
                     if (jObj["SiteEngName"] != null)
                         airPollution.strSiteEngName = (string)jObj["SiteEngName"];
+                    if (jObj["SiteName"] != null)
+                    {
+                        string strUnicodeSiteName  = (string)jObj["SiteName"];
+                        airPollution.strSiteName = System.Text.RegularExpressions.Regex.Unescape(strUnicodeSiteName);
+                    }
+                    if (!IsRecordExisted(airPollution.strSiteEngName, airPollution.strTimeStamp))
+                        InsertToDatabase(airPollution);
                 }
-
-                XmlDocument xmlWC = new XmlDocument();
-                xmlWC.Load("Wolframcarbid.xml");
-                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/DbSource");
-                m_strDbSource = nodeDb.InnerText;
-
-                //XmlNode nodePM25Loc = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/PM25/Location");
-                //nodePM25Loc = nodePM25Loc.NextSibling;
-
-                if (!IsDBExisted())
-                {
-                    CreateDatabase();
-                    CreateTable();
-                }
-
-                if (!IsRecordExisted(airPollution.strSiteEngName, airPollution.strTimeStamp))
-                    InsertToDatabase(airPollution);
-
             }
             catch (Exception e)
             {
