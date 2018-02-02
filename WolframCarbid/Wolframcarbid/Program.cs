@@ -90,7 +90,7 @@ namespace Wolframcarbid
                     string strPeriod = "", strCmd = "", strLatestExecution = "";
                     double fPeriodInSec = 0.0;
                     DateTime localDate = DateTime.Now;
-                    DateTime latestExec = localDate;
+                    DateTime latestExec = new DateTime(2010, 1, 1);
                     if (nodeTask["Period"] != null)
                     {
                         strPeriod = nodeTask["Period"].InnerText;
@@ -102,7 +102,8 @@ namespace Wolframcarbid
                     if (nodeTask["LatestExecution"] != null)
                     {
                         strLatestExecution = nodeTask["LatestExecution"].InnerText;
-                        latestExec = Convert.ToDateTime(strLatestExecution);
+                        if (strLatestExecution.Length > 0)
+                            latestExec = Convert.ToDateTime(strLatestExecution);
                     }
 
                     TimeSpan tsDiff = localDate.Subtract(latestExec);

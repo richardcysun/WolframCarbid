@@ -13,6 +13,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Xml;
 using System.Xml.Linq;
+using System.Reflection;
 
 namespace Wolframcarbid
 {
@@ -158,7 +159,9 @@ namespace Wolframcarbid
         private bool IsDBExisted()
         {
             string strStatement = "SELECT * FROM dbo.AirPollution";
-            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            bool bExisted = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            Trace.WriteLine("IsDBExisted >>>" + bExisted + "<<<");
+            return bExisted;
         }
 
         private bool IsRecordExisted(string strSiteEngName, string strTimestamp)
@@ -167,13 +170,16 @@ namespace Wolframcarbid
             string strStatement = "SELECT * FROM dbo.AirPollution WHERE [SiteEngName] = '" + strSiteEngName + "' AND [DataTime] = Convert(datetime, '" + strTimestamp + "')";
             bExecuted = ExecuteSQLCmdQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement, ref bHasData);
 
+            Trace.WriteLine("IsDBExisted >>>Executed: " + bExecuted + ", Has data: " + bHasData + "<<<");
             return (bExecuted && bHasData);
         }
 
         private bool CreateDatabase()
         {
             string strStatement = "CREATE DATABASE Wolframcarbid";
-            return ExecuteSQLCmdNonQuery(CDataBaseConstants.MSATER_DB, strStatement);
+            bool bCreated = ExecuteSQLCmdNonQuery(CDataBaseConstants.MSATER_DB, strStatement);
+            Trace.WriteLine("CreateDatabase >>>" + bCreated + "<<<");
+            return bCreated;
         }
 
         private bool CreateTable()
@@ -184,7 +190,9 @@ namespace Wolframcarbid
                 "CO FLOAT, SO2 FLOAT, O3 FLOAT, " +
                 "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime NOT NULL)";
 
-            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            bool bCreated = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            Trace.WriteLine("CreateTable >>>" + bCreated + "<<<");
+            return bCreated;
         }
 
         private bool InsertToDatabase(AirPollution airPollution)
@@ -202,17 +210,24 @@ namespace Wolframcarbid
                 airPollution.WindSpeed.ToString() + ", " +
                 airPollution.WindDirec.ToString() + ", " +
                 "'" + airPollution.strTimeStamp + "')";
-            return ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            bool bInserted = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
+            Trace.WriteLine("InsertToDatabase >>>" + bInserted + "<<<");
+            return bInserted;
         }
 
         private void CreateLocationList()
         {
+            Trace.WriteLine("CreateLocationList >>>");
+
             m_lstLocations = new List<string>();
+            string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
+            Trace.WriteLine(strXmlPath);
+
             if (String.Compare(m_strLocation, "xml", StringComparison.OrdinalIgnoreCase) == 0)
             {
                 //If the location is xml, it means we should refer to Wolframcarbid.xml file for target locations
                 XmlDocument xmlWC = new XmlDocument();
-                xmlWC.Load("Wolframcarbid.xml");
+                xmlWC.Load(strXmlPath);
                 XmlNode nodePM25Loc = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/PM25/Location");
 
                 while (nodePM25Loc != null)
@@ -223,6 +238,8 @@ namespace Wolframcarbid
             }
             else
                 m_lstLocations.Add(m_strLocation);
+
+            Trace.WriteLine("CreateLocationList <<<");
         }
 
         private bool CompareLocation(string strEngSiteName)
@@ -255,8 +272,11 @@ namespace Wolframcarbid
                 if (stmReader != null)
                     stmReader.Close();
 
+                string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
+                Trace.WriteLine(strXmlPath);
+
                 XmlDocument xmlWC = new XmlDocument();
-                xmlWC.Load("Wolframcarbid.xml");
+                xmlWC.Load(strXmlPath);
                 XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/DbSource");
                 m_strDbSource = nodeDb.InnerText;
 

@@ -160,7 +160,7 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Trace.WriteLine("Unable to retrieve route ID from Web Source\n");
+                    Trace.WriteLine("Unable to retrieve route ID from Web Source");
                 }
             }
             catch (Exception e)
@@ -170,7 +170,10 @@ namespace Wolframcarbid
             }
 
             if (!bFound)
+            {
+                Console.WriteLine("Route not found!");
                 return nRetCode;
+            }
 
             bFound = false;//reset bFound for next incoming data
             string strStopRet = GetStopIdAsync(strRouteId, m_strStopName).GetAwaiter().GetResult();
@@ -217,7 +220,10 @@ namespace Wolframcarbid
             }
 
             if (!bFound)
+            {
+                Console.WriteLine("Stop not found!");
                 return nRetCode;
+            }
 
             string strEtaRet = GetStopEtaAsync(strRouteId, strStopId).GetAwaiter().GetResult();
             try

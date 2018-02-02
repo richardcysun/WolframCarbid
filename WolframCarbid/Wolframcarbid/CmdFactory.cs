@@ -48,7 +48,7 @@ namespace Wolframcarbid
 
         public static void Init(CWcCmdFactory cmdFactory)
         {
-            Trace.WriteLine("CWcCmdInvoker::Init >>>");
+            Trace.WriteLine("CWcCmdInvoker::Init >>><<<");
             m_cmdFactory = cmdFactory;
         }
 
@@ -62,6 +62,8 @@ namespace Wolframcarbid
             {
                 bRet = cmdHndler.IsCmdValid();
             }
+
+            Trace.WriteLine("CheckCommand >>>" + bRet + "<<<");
             return bRet;
         }
 
@@ -75,6 +77,7 @@ namespace Wolframcarbid
                 bSelfSustained = cmdHndler.IsSelfSustainedCmd();
             }
 
+            Trace.WriteLine("IsSelfSusatinedCommand >>>" + bSelfSustained + "<<<");
             return bSelfSustained;
         }
 
