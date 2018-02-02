@@ -11,6 +11,7 @@ namespace Wolframcarbid
         public const string SERVICE_NAME = "WolframCarbid";
         public const string SERVICE_DISPLAY_NAME = "WolframCarbid Command-Line Interface";
         public const string SERVICE_MODE = "-s";
+        public const string CONFIG_FILE = "Wolframcarbid.xml";
     }
 
     static class CCmdConstants

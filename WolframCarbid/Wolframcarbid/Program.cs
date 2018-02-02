@@ -7,12 +7,17 @@ using System.Diagnostics;
 using System.ServiceProcess;
 using System.Configuration.Install;
 using System.Reflection;
+using System.Timers;
+using System.Globalization;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Wolframcarbid
 {
     public class CWcService : ServiceBase
     {
         CWcfCommunication m_wcfServer;
+        Timer m_Timer;
 
         //bInstall: true
         //          Self-installing Wolframcarbid
@@ -36,13 +41,109 @@ namespace Wolframcarbid
             }
             catch (Exception e)
             {
-                Trace.WriteLine("An exception was thrown during service uninstallation:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during service uninstallation: " + e.ToString());
             }
         }
 
         public CWcService()
         {
             //nothing here, just an polymorphism constructor to be different from CWcService(bool bInstall)
+        }
+
+        private void LaunchProcess(string strArgument)
+        {
+            var process = Process.GetCurrentProcess();
+            string strProcessPath = process.MainModule.FileName;
+            strProcessPath = strProcessPath.Replace(".vshost.", ".");
+
+            ProcessStartInfo processInfo = new ProcessStartInfo(strProcessPath);
+            processInfo.Arguments = strArgument;
+
+            Trace.WriteLine(strProcessPath);
+            Trace.WriteLine(strArgument);
+
+            try
+            {
+                Process.Start(processInfo);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("An exception was thrown during service installation: " + e.ToString());
+            }
+        }
+
+        private void ParseTasks()
+        {
+            Trace.WriteLine("ParseTasks >>>");
+
+            try
+            {
+                string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
+                Trace.WriteLine(strXmlPath);
+
+                XmlDocument xmlWC = new XmlDocument();
+                xmlWC.Load(strXmlPath);
+                XmlNode nodeTask = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/Tasks/Task");
+
+                while (nodeTask != null)
+                {
+                    string strPeriod = "", strCmd = "", strLatestExecution = "";
+                    double fPeriodInSec = 0.0;
+                    DateTime localDate = DateTime.Now;
+                    DateTime latestExec = localDate;
+                    if (nodeTask["Period"] != null)
+                    {
+                        strPeriod = nodeTask["Period"].InnerText;
+                        fPeriodInSec = Convert.ToDouble(strPeriod);
+                    }
+                    if (nodeTask["Command"] != null)
+                        strCmd = nodeTask["Command"].InnerText;
+
+                    if (nodeTask["LatestExecution"] != null)
+                    {
+                        strLatestExecution = nodeTask["LatestExecution"].InnerText;
+                        latestExec = Convert.ToDateTime(strLatestExecution);
+                    }
+
+                    TimeSpan tsDiff = localDate.Subtract(latestExec);
+
+                    double fSecs = tsDiff.TotalSeconds;
+
+                    if (fSecs > fPeriodInSec)
+                    {
+                        Trace.WriteLine("Time is up!!");
+                        LaunchProcess(strCmd);
+
+                        CultureInfo culture = new CultureInfo("en-US");
+                        if (nodeTask["LatestExecution"] != null)
+                        {
+                            nodeTask["LatestExecution"].InnerText = localDate.ToString(culture);
+                        }
+                        else
+                        {
+                            XmlElement elem;
+                            elem = xmlWC.CreateElement("LatestExecution");
+                            elem.InnerText = localDate.ToString(culture);
+                            nodeTask.AppendChild(elem);
+                        }
+                        xmlWC.Save(strXmlPath);
+                    }
+
+                    nodeTask = nodeTask.NextSibling;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("An exception was thrown: " + e.ToString());
+            }
+            Trace.WriteLine("ParseTasks <<<");
+        }
+
+        private void OnTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            Trace.WriteLine("OnTimedEvent >>>");
+            ParseTasks();
+            Trace.WriteLine("OnTimedEvent <<<");
         }
 
         protected override void OnStart(string[] args)
@@ -58,6 +159,11 @@ namespace Wolframcarbid
 
             CWcCmdInvoker.Init(cmdFactory);
 
+            m_Timer = new Timer(30000);
+            m_Timer.Elapsed += OnTimedEvent;
+            m_Timer.AutoReset = true;
+            m_Timer.Enabled = true;
+
             Trace.WriteLine("OnStart <<<");
         }
 
@@ -65,6 +171,7 @@ namespace Wolframcarbid
         {
             base.OnStop();
 
+            m_Timer.Close();
             m_wcfServer.DeinitWcfServer();
         }
     }

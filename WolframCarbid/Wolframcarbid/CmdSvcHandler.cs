@@ -101,12 +101,10 @@ namespace Wolframcarbid
 
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
-            ErrorCodes nRetCode = ErrorCodes.ERR_NOT_IMP;
-
             //This CWcService can trigger entire install or uninstall sequence
             CWcService wcService = new CWcService(m_bCmdInstall);
 
-            return nRetCode;
+            return ErrorCodes.SUCCESS;
         }
 
         public override string GetUsage()
@@ -213,7 +211,7 @@ namespace Wolframcarbid
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_LAUNCH_PROC;
-                Trace.WriteLine("An exception was thrown during service installation:\n" + e.ToString());
+                Trace.WriteLine("An exception was thrown during service installation: " + e.ToString());
                 strResMsg = "WolframCarbid was unable to launch slavery process.";
             }
             return nRetCode;
