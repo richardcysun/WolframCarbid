@@ -66,21 +66,23 @@ namespace Wolframcarbid
         {
             if (m_bValid)
             {
-                Trace.WriteLine("Already has parameters.");
+                Trace.WriteLine("CmdPM25CmdHandler::Already has parameters.");
                 return;
             }
 
             if ((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
-                Trace.WriteLine("Bad command inputs.");
+                Trace.WriteLine("CmdPM25CmdHandler::Bad command inputs.");
                 return;
             }
 
             string strTemp;
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_LOCATION);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
+            {
+                Trace.WriteLine("CmdPM25CmdHandler::Can't find target location");
                 return;
-
+            }
             m_strLocation = strTemp;
 
             m_bValid = true;
@@ -148,7 +150,7 @@ namespace Wolframcarbid
             }
             catch (Exception e)
             {
-                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("CmdPM25CmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
             finally
             {
@@ -164,7 +166,7 @@ namespace Wolframcarbid
         {
             string strStatement = "SELECT * FROM dbo.AirPollution";
             bool bExisted = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
-            Trace.WriteLine("IsDBExisted >>>" + bExisted + "<<<");
+            Trace.WriteLine("CmdPM25CmdHandler::IsDBExisted >>>" + bExisted + "<<<");
             return bExisted;
         }
 
@@ -174,7 +176,7 @@ namespace Wolframcarbid
             string strStatement = "SELECT * FROM dbo.AirPollution WHERE [SiteEngName] = '" + strSiteEngName + "' AND [DataTime] = Convert(datetime, '" + strTimestamp + "')";
             bExecuted = ExecuteSQLCmdQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement, ref bHasData);
 
-            Trace.WriteLine("IsDBExisted >>>Executed: " + bExecuted + ", Has data: " + bHasData + "<<<");
+            Trace.WriteLine("CmdPM25CmdHandler::IsDBExisted >>>Executed: " + bExecuted + ", Has data: " + bHasData + "<<<");
             return (bExecuted && bHasData);
         }
 
@@ -182,7 +184,7 @@ namespace Wolframcarbid
         {
             string strStatement = "CREATE DATABASE Wolframcarbid";
             bool bCreated = ExecuteSQLCmdNonQuery(CDataBaseConstants.MSATER_DB, strStatement);
-            Trace.WriteLine("CreateDatabase >>>" + bCreated + "<<<");
+            Trace.WriteLine("CmdPM25CmdHandler::CreateDatabase >>>" + bCreated + "<<<");
             return bCreated;
         }
 
@@ -195,7 +197,7 @@ namespace Wolframcarbid
                 "WindSpeed FLOAT, WinDirection FLOAT, DataTime datetime NOT NULL)";
 
             bool bCreated = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
-            Trace.WriteLine("CreateTable >>>" + bCreated + "<<<");
+            Trace.WriteLine("CmdPM25CmdHandler::CreateTable >>>" + bCreated + "<<<");
             return bCreated;
         }
 
@@ -215,13 +217,13 @@ namespace Wolframcarbid
                 airPollution.WindDirec.ToString() + ", " +
                 "'" + airPollution.strTimeStamp + "')";
             bool bInserted = ExecuteSQLCmdNonQuery(CDataBaseConstants.WOLFRAMCARBID_DB, strStatement);
-            Trace.WriteLine("InsertToDatabase >>>" + bInserted + "<<<");
+            Trace.WriteLine("CmdPM25CmdHandler::InsertToDatabase >>>" + bInserted + "<<<");
             return bInserted;
         }
 
         private void CreateLocationList()
         {
-            Trace.WriteLine("CreateLocationList >>>");
+            Trace.WriteLine("CmdPM25CmdHandler::CreateLocationList >>>");
 
             m_lstLocations = new List<string>();
             string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
@@ -243,7 +245,7 @@ namespace Wolframcarbid
             else
                 m_lstLocations.Add(m_strLocation);
 
-            Trace.WriteLine("CreateLocationList <<<");
+            Trace.WriteLine("CmdPM25CmdHandler::CreateLocationList <<<");
         }
 
         private bool CompareLocation(string strEngSiteName)
@@ -254,6 +256,23 @@ namespace Wolframcarbid
             if (strSite != null)
                 bFound = true;
             return bFound; 
+        }
+
+        private void GetDatabaseManifest()
+        {
+            string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
+            Trace.WriteLine(strXmlPath);
+
+            XmlDocument xmlWC = new XmlDocument();
+            xmlWC.Load(strXmlPath);
+            XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/Database");
+            m_strDbSource = nodeDb[CDataBaseConstants.SRC].InnerText;//If no data here, just throw excpetion
+
+            if (nodeDb[CDataBaseConstants.USER] != null)
+                m_strDbUser = nodeDb[CDataBaseConstants.USER].InnerText;
+
+            if (nodeDb[CDataBaseConstants.PASSWORD] != null)
+                m_strDbPwd = nodeDb[CDataBaseConstants.PASSWORD].InnerText;
         }
 
         public override ErrorCodes ProcessSelfSustainedCmd()
@@ -276,19 +295,7 @@ namespace Wolframcarbid
                 if (stmReader != null)
                     stmReader.Close();
 
-                string strXmlPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\" + CServiceConstants.CONFIG_FILE;
-                Trace.WriteLine(strXmlPath);
-
-                XmlDocument xmlWC = new XmlDocument();
-                xmlWC.Load(strXmlPath);
-                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/Database");
-                m_strDbSource = nodeDb["Source"].InnerText;//If no data here, just throw excpetion
-
-                if (nodeDb["User"] != null)
-                    m_strDbUser = nodeDb["User"].InnerText;
-
-                if (nodeDb["Pwd"] != null)
-                    m_strDbPwd = nodeDb["Pwd"].InnerText;
+                GetDatabaseManifest();
 
                 if (!IsDBExisted())
                 {
@@ -348,9 +355,10 @@ namespace Wolframcarbid
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("CmdPM25CmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
 
+            Trace.WriteLine("CmdPM25CmdHandler::ProcessSelfSustainedCmd >>>" + nRetCode + "<<<");
             return nRetCode;
         }
 

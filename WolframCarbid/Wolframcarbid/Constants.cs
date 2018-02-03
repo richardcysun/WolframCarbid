@@ -33,12 +33,18 @@ namespace Wolframcarbid
         public const string CMD_PM25_NAME = "pm25";
         public const string CMD_PM25_USAGE = "Usgae: WolframCarbid.exe -wc=pm25 -loc=Songshan";
 
+        public const string CMD_DB_MANIFEST_NAME = "dbm";
+        public const string CMD_DB_MANIFEST_USAGE = "Usgae: WolframCarbid.exe -wc=dbm -src=\"(local)\" -user={account} -pwd={password}";
+
         public const string CMD_PARAM_ACT = "-act";
         public const string CMD_PARAM_SVC = "-svc";
         public const string CMD_PARAM_ROUTE = "-rt";
         public const string CMD_PARAM_STOP = "-stop";
         public const string CMD_PARAM_BOUND = "-bound";
         public const string CMD_PARAM_LOCATION = "-loc";
+        public const string CMD_PARAM_SOURCE = "-src";
+        public const string CMD_PARAM_USER = "-user";
+        public const string CMD_PARAM_PASSWORD = "-pwd";
 
         public const string CMD_VALUE_INSTALL = "install";
         public const string CMD_VALUE_UNINSTALL = "uninstall";
@@ -52,6 +58,16 @@ namespace Wolframcarbid
     {
         public const string MSATER_DB = "master";
         public const string WOLFRAMCARBID_DB = "WolframCarbid";
+        public const string SRC = "Source";
+        public const string USER = "User";
+        public const string PASSWORD = "Pwd";
+    }
+
+    static class CTaskConstants
+    {
+        public const string PERIOD = "Period";
+        public const string COMMAND = "Command";
+        public const string LATEST_EXEC = "LatestExecution";
     }
 
     public enum ErrorCodes : int

@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CmdDbHandler.cs" />
     <Compile Include="CmdPM25Handler.cs" />
     <Compile Include="CmdBusHandler.cs" />
     <Compile Include="CmdCommunication.cs" />

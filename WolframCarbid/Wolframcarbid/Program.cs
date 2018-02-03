@@ -91,17 +91,17 @@ namespace Wolframcarbid
                     double fPeriodInSec = 0.0;
                     DateTime localDate = DateTime.Now;
                     DateTime latestExec = new DateTime(2010, 1, 1);
-                    if (nodeTask["Period"] != null)
+                    if (nodeTask[CTaskConstants.PERIOD] != null)
                     {
-                        strPeriod = nodeTask["Period"].InnerText;
+                        strPeriod = nodeTask[CTaskConstants.PERIOD].InnerText;
                         fPeriodInSec = Convert.ToDouble(strPeriod);
                     }
-                    if (nodeTask["Command"] != null)
-                        strCmd = nodeTask["Command"].InnerText;
+                    if (nodeTask[CTaskConstants.COMMAND] != null)
+                        strCmd = nodeTask[CTaskConstants.COMMAND].InnerText;
 
-                    if (nodeTask["LatestExecution"] != null)
+                    if (nodeTask[CTaskConstants.LATEST_EXEC] != null)
                     {
-                        strLatestExecution = nodeTask["LatestExecution"].InnerText;
+                        strLatestExecution = nodeTask[CTaskConstants.LATEST_EXEC].InnerText;
                         if (strLatestExecution.Length > 0)
                             latestExec = Convert.ToDateTime(strLatestExecution);
                     }
@@ -116,14 +116,14 @@ namespace Wolframcarbid
                         LaunchProcess(strCmd);
 
                         CultureInfo culture = new CultureInfo("en-US");
-                        if (nodeTask["LatestExecution"] != null)
+                        if (nodeTask[CTaskConstants.LATEST_EXEC] != null)
                         {
-                            nodeTask["LatestExecution"].InnerText = localDate.ToString(culture);
+                            nodeTask[CTaskConstants.LATEST_EXEC].InnerText = localDate.ToString(culture);
                         }
                         else
                         {
                             XmlElement elem;
-                            elem = xmlWC.CreateElement("LatestExecution");
+                            elem = xmlWC.CreateElement(CTaskConstants.LATEST_EXEC);
                             elem.InnerText = localDate.ToString(culture);
                             nodeTask.AppendChild(elem);
                         }
@@ -215,6 +215,7 @@ namespace Wolframcarbid
                 "      example: \"Wolframcarbid.exe -wc=ctrl -svc=EFS \"\n",
                 "      Self-Sustained Commands:",
                 "      -wc=inst (Admin privilege, register tool as a Windows Service)",
+                "      -wc=dbm (normal user privilege, set database manifest)",
                 "      -wc=bus (normal user privilege, query bus status)",
                 "      -wc=pm25 (normal user privilege, query particulate matter data)\n",
                 "      Master-Slave Commands (must run \"inst\" command in the first place):",
@@ -230,6 +231,7 @@ namespace Wolframcarbid
             cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SVC_NAME, new CCtrlSvcCmdHandler());
             cmdFactory.RegisterHandler(CCmdConstants.CMD_CTRL_SLAVE_SVC_NAME, new CCtrlSlaveSvcCmdHandler());
             cmdFactory.RegisterHandler(CCmdConstants.CMD_BUS_NAME, new CBusCmdHandler());
+            cmdFactory.RegisterHandler(CCmdConstants.CMD_DB_MANIFEST_NAME, new CDbManifestHandler());
             cmdFactory.RegisterHandler(CCmdConstants.CMD_PM25_NAME, new CmdPM25CmdHandler());
         }
 

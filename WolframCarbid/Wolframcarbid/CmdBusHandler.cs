@@ -51,28 +51,35 @@ namespace Wolframcarbid
 
             string strTemp;
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_ROUTE);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
                 return;
 
             m_strRouteName = strTemp;
 
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_STOP);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
+            {
+                Trace.WriteLine("CBusCmdHandler::Can't find bus stop.");
                 return;
-
+            }
             m_strStopName = strTemp;
 
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_BOUND);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
+            {
+                Trace.WriteLine("CBusCmdHandler::Can't find bus bounding direction.");
                 return;
+            }
 
             if (strTemp.CompareTo(CCmdConstants.CMD_VALUE_IN) == 0)
                 m_bInBound = true;
             else if (strTemp.CompareTo(CCmdConstants.CMD_VALUE_OUT) == 0)
                 m_bInBound = false;
             else
+            {
+                Trace.WriteLine("CBusCmdHandler::Bus direction is neither inbound nor outbound");
                 return;//abort if neither inbound nor outbound
-
+            }
             m_bValid = true;
         }
 
@@ -160,18 +167,19 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Trace.WriteLine("Unable to retrieve route ID from Web Source");
+                    Trace.WriteLine("CBusCmdHandler::Unable to retrieve route ID from Web Source");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("CBusCmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
 
             if (!bFound)
             {
                 Console.WriteLine("Route not found!");
+                Trace.WriteLine("CBusCmdHandler::ProcessSelfSustainedCmd >>>Bus route not found<<<");
                 return nRetCode;
             }
 
@@ -210,18 +218,19 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Trace.WriteLine("Unable to retrieve stop ID from Web Source");
+                    Trace.WriteLine("CBusCmdHandler::Unable to retrieve stop ID from Web Source");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("CBusCmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
 
             if (!bFound)
             {
                 Console.WriteLine("Stop not found!");
+                Trace.WriteLine("CBusCmdHandler::ProcessSelfSustainedCmd >>>Bus stop not found<<<");
                 return nRetCode;
             }
 
@@ -254,15 +263,16 @@ namespace Wolframcarbid
                 else
                 {
                     nRetCode = ErrorCodes.UNABLE_TO_GET_DATA;
-                    Trace.WriteLine("Unable to retrieve stop ETA from Web Source");
+                    Trace.WriteLine("CBusCmdHandler::Unable to retrieve stop ETA from Web Source");
                 }
             }
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_PARSE_DATA;
-                Trace.WriteLine("An exception was thrown during json parsing: " + e.ToString());
+                Trace.WriteLine("CBusCmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
 
+            Trace.WriteLine("CBusCmdHandler::ProcessSelfSustainedCmd >>>" + nRetCode + "<<<");
             return nRetCode;
         }
 

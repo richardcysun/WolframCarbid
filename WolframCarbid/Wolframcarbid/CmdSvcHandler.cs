@@ -59,13 +59,13 @@ namespace Wolframcarbid
         {
             if (m_bValid)
             {
-                Trace.WriteLine("Already has parameters.");
+                Trace.WriteLine("CInstSvcCmdHandler::Already has parameters.");
                 return;
             }
 
             if ((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
-                Trace.WriteLine("Bad command inputs.");
+                Trace.WriteLine("CInstSvcCmdHandler::Bad command inputs.");
                 return;
             }
 
@@ -136,34 +136,34 @@ namespace Wolframcarbid
         {
             if (m_bValid)
             {
-                Trace.WriteLine("Already has parameters.");
+                Trace.WriteLine("CCtrlSvcCmdHandler::Already has parameters.");
                 return;
             }
 
             if ((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
-                Trace.WriteLine("Bad command inputs.");
+                Trace.WriteLine("CCtrlSvcCmdHandler::Bad command inputs.");
                 return;
             }
 
             string strTemp;
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_ACT);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
             {
-                Trace.WriteLine("Can't find act.");
+                Trace.WriteLine("CCtrlSvcCmdHandler::Can't find service action");
                 return;
             }
 
             if ((strTemp.CompareTo(CCmdConstants.CMD_VALUE_START) != 0) && (strTemp.CompareTo(CCmdConstants.CMD_VALUE_STOP) != 0))
             {
-                Trace.WriteLine("Neither start nor stop.");
+                Trace.WriteLine("CCtrlSvcCmdHandler::Service action is neither start nor stop");
                 return; //abort if neither start nor stop
             }
 
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_SVC);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
             {
-                Trace.WriteLine("Can't find svc.");
+                Trace.WriteLine("CCtrlSvcCmdHandler::Can't find service name");
                 return;
             }
 
@@ -211,9 +211,10 @@ namespace Wolframcarbid
             catch (Exception e)
             {
                 nRetCode = ErrorCodes.UNABLE_TO_LAUNCH_PROC;
-                Trace.WriteLine("An exception was thrown during service installation: " + e.ToString());
+                Trace.WriteLine("CCtrlSvcCmdHandler::An exception was thrown during service installation: " + e.ToString());
                 strResMsg = "WolframCarbid was unable to launch slavery process.";
             }
+            Trace.WriteLine("CCtrlSvcCmdHandler::ProcessSlaveryCmd >>>" + nRetCode + "<<<");
             return nRetCode;
         }
 
@@ -256,21 +257,21 @@ namespace Wolframcarbid
         {
             if (m_bValid)
             {
-                Trace.WriteLine("Already has parameters.");
+                Trace.WriteLine("CCtrlSlaveSvcCmdHandler::Already has parameters.");
                 return;
             }
 
             if ((!m_wcCmd.IsWellFormed()) || (m_wcCmd.GetCmdName().CompareTo(cmdName) != 0))
             {
-                Trace.WriteLine("Bad command inputs.");
+                Trace.WriteLine("CCtrlSlaveSvcCmdHandler::Bad command inputs.");
                 return;
             }
 
             string strTemp;
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_ACT);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
             {
-                Trace.WriteLine("Can't find act.");
+                Trace.WriteLine("CCtrlSlaveSvcCmdHandler::Can't find service action");
                 return;
             }
             if (strTemp.CompareTo(CCmdConstants.CMD_VALUE_START) == 0)
@@ -279,14 +280,14 @@ namespace Wolframcarbid
                 m_bCmdStart = false;
             else
             {
-                Trace.WriteLine("Neither start nor stop.");
+                Trace.WriteLine("CCtrlSlaveSvcCmdHandler::Service action is neither start nor stop");
                 return; //abort if neither start nor stop
             }
 
             strTemp = m_wcCmd.GetValueByParam(CCmdConstants.CMD_PARAM_SVC);
-            if (strTemp.Length == 0)
+            if (strTemp.Length == 0)//Mandatory parameter
             {
-                Trace.WriteLine("Can't find svc.");
+                Trace.WriteLine("CCtrlSlaveSvcCmdHandler::Can't find service name");
                 return;
             }
             m_strSvcName = strTemp;
@@ -311,7 +312,6 @@ namespace Wolframcarbid
 
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
-            Trace.WriteLine("ProcessSelfSustainedCmd");
             ServiceController service = new ServiceController(m_strSvcName);
 
             if (m_bCmdStart)
@@ -319,6 +319,7 @@ namespace Wolframcarbid
             else
                 service.Stop();
 
+            Trace.WriteLine("CCtrlSlaveSvcCmdHandler::ProcessSelfSustainedCmd >>><<<");
             return ErrorCodes.SUCCESS;
         }
 
