@@ -83,9 +83,22 @@ For every daemon service, inevitably, the resource leak is the biggest pain and 
 
 :notebook: Process Class
 :notebook: ProcessStartInfo Class
+### AES Encryption
+There is a small class wrapper combines AesCryptoServiceProvider and Base64 to convert plaintext and ciphertext.
 
+整合 AesCryptoServiceProvider 以及 Base64，提供一個簡單的加解密類別。
+
+:notebook: AesCryptoServiceProvider Class
+### Task Scheduler
+As everyone mentions Task Scheduler, people always think of TaskScheduler and TaskDefinition classes. But I find they are a bit heavy in this project. Therefore I simply use a simple Timer to achieve the same objective.
+
+在 C# 提到 Task Scheduler，眾所皆知的選項就是 TaskScheduler 以及 TaskDefinition 兩個類別。不過對於這個專案，有點殺雞用牛刀的感覺，所以此處用了 Timer 簡單勾勒一下。
+
+:notebook: Timer Class
+:notebook: DateTime Class
 ### Start/Stop Windows System Service
 This feature is simply an example about how to use C# to manage Windows System Service
+
 簡單的小範例，實驗如何用 C# 控制 Windows System Service。
 
 ```
@@ -93,7 +106,16 @@ Wolframcarbid.exe -wc=ctrl -act={start | stop} -svc={name}
 ```
 
 :notebook: ServiceController Class
+### Set SQL database location and user/password
+A simple command to set SQL server location and logon user/password. The password is encrypted in configuration XML file.
 
+提供命令能設定 SQL 伺服器位置及登入帳密，密碼以加密形式儲放於 XML 檔。
+```
+Wolframcarbid.exe -wc=dbm -src={location} -user={account} -pwd={password}
+```
+:notebook: XmlDocument Class
+:notebook: XmlNode Class
+:notebook: XmlElement Class
 ### New Tapei City Bus Arrival Time Query
 
 This feature is simply an example about how to use C# to create a HTTP Client and how to manage JSON data.
@@ -106,7 +128,24 @@ Wolframcarbid.exe -wc=bus -stop={stop_name} -bound={in | out}
 
 :notebook: HttpClient Class
 :notebook: HttpResponseMessage Class
-:notebook: Jvalue Class
+:notebook: JObject Class
+
+### Taiwan Air Quality Index and PM2.5 Query
+
+This feature is an example to demonstrate how to use C# to convert Taiwan Air Quality JSON data and insert in Microsoft SQL server. The data source is Taiwan Environment Protection Administration.
+
+查詢台灣環保署空氣品質資料，包含 AQI，PM 2.5 及其他汙染物。同時也練習如何用 C# 將 JSON 資料儲存於 Microsoft SQL 伺服器。
+
+```
+Wolframcarbid.exe -wc=pm25 -loc={location_name}
+If location_name = "xml", it will search Wolframcarbid.xml for a list with multiple locations
+```
+
+:notebook: WebClient Class
+:notebook: JObject Class
+:notebook: SqlConnection Class
+:notebook: SqlCommand Class
+:notebook: SqlDataReader Class
 
 Richard, Chih-Yao Sun
 
