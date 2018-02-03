@@ -272,12 +272,16 @@ namespace Wolframcarbid
                 m_strDbUser = nodeDb[CDataBaseConstants.USER].InnerText;
 
             if (nodeDb[CDataBaseConstants.PASSWORD] != null)
-                m_strDbPwd = nodeDb[CDataBaseConstants.PASSWORD].InnerText;
+            {
+                string strCipherPwd = nodeDb[CDataBaseConstants.PASSWORD].InnerText;
+                m_strDbPwd = CWCCrypt.Decrypt(strCipherPwd);
+            }
         }
 
         public override ErrorCodes ProcessSelfSustainedCmd()
         {
             ErrorCodes nRetCode = ErrorCodes.SUCCESS;
+            bool bLocationFound = false;
 
             //new XDocument(new XElement("Wolframcarbid", new XElement("DbSource", ".\\SQLEXPRESS") )).Save("Wolframcarbid.xml");
 
@@ -350,6 +354,8 @@ namespace Wolframcarbid
                     }
                     if (!IsRecordExisted(airPollution.strSiteEngName, airPollution.strTimeStamp))
                         InsertToDatabase(airPollution);
+                    Console.WriteLine(airPollution.strSiteEngName + ", AQI: " + airPollution.AQI);
+                    bLocationFound = true;
                 }
             }
             catch (Exception e)
@@ -358,6 +364,8 @@ namespace Wolframcarbid
                 Trace.WriteLine("CmdPM25CmdHandler::An exception was thrown during json parsing: " + e.ToString());
             }
 
+            if (!bLocationFound)
+                Console.WriteLine("Location not found!");
             Trace.WriteLine("CmdPM25CmdHandler::ProcessSelfSustainedCmd >>>" + nRetCode + "<<<");
             return nRetCode;
         }

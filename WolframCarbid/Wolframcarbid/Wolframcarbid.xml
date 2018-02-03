@@ -1,16 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wolframcarbid>
-  <DbSource>.\SQLEXPRESS</DbSource>
+  <Database>
+    <Source>.\SQLEXPRESS</Source>
+    <User>sa</User>
+    <Pwd>awa5TPVQp11XJHmaGNRTgw==</Pwd>
+  </Database>
   <Tasks>
     <Task name="PM25">
       <Period unit="second">300</Period>
       <Command>-wc=pm25 -loc=xml</Command>
-      <LatestExecution></LatestExecution>
+      <LatestExecution>
+      </LatestExecution>
     </Task>
   </Tasks>
   <PM25>
     <Location>Qianjin</Location>
-    <Location>Qianzhen</Location>
+    <Location>Miaoli</Location>
     <Location>Renwu</Location>
     <Location>Yonghe</Location>
     <Location>Tucheng</Location>

@@ -58,6 +58,7 @@
     <Compile Include="CmdSvcHandler.cs" />
     <Compile Include="Command.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="CryptUtils.cs" />
     <Compile Include="Program.cs">
       <SubType>Component</SubType>
     </Compile>

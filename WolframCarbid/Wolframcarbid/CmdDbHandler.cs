@@ -128,15 +128,16 @@ namespace Wolframcarbid
 
             if (m_strDbPassword.Length > 0)
             {
+                string strCiherPwd = CWCCrypt.Encrypt(m_strDbPassword);
                 if (nodeDb[CDataBaseConstants.PASSWORD] != null)
                 {
-                    nodeDb[CDataBaseConstants.PASSWORD].InnerText = m_strDbPassword;
+                    nodeDb[CDataBaseConstants.PASSWORD].InnerText = strCiherPwd;
                 }
                 else
                 {
                     XmlElement elem;
                     elem = xmlWC.CreateElement(CDataBaseConstants.PASSWORD);
-                    elem.InnerText = m_strDbPassword;
+                    elem.InnerText = strCiherPwd;
                     nodeDb.AppendChild(elem);
                 }
             }
