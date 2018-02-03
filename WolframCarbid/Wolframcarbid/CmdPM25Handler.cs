@@ -38,6 +38,8 @@ namespace Wolframcarbid
     class CmdPM25CmdHandler : CAbstractCmdHandler
     {
         private string m_strDbSource;
+        private string m_strDbUser;
+        private string m_strDbPwd;
         private string m_strLocation;
         private string m_strDlFile;
         List<string> m_lstLocations;
@@ -48,6 +50,8 @@ namespace Wolframcarbid
             m_bSelfSustainedCmd = true;
             m_strUsage = CCmdConstants.CMD_PM25_USAGE;
             m_strDbSource = "";
+            m_strDbUser = "";
+            m_strDbPwd = "";
             m_strLocation = "";
             m_strDlFile = "epa.json";
         }
@@ -100,7 +104,7 @@ namespace Wolframcarbid
         private bool ExecuteSQLCmdNonQuery(string strDatabase, string strSqlStatement)
         {
             bool bRet = false;
-            string strConnect = "Server=" + m_strDbSource + ";Trusted_Connection=yes;database=" + strDatabase;
+            string strConnect = "Server=" + m_strDbSource + ";User Id=" + m_strDbUser + ";Password=" + m_strDbPwd +";database=" + strDatabase;
             SqlConnection sqlConn = new SqlConnection(strConnect);
             SqlCommand sqlCommand = new SqlCommand(strSqlStatement, sqlConn);
 
@@ -128,7 +132,7 @@ namespace Wolframcarbid
         private bool ExecuteSQLCmdQuery(string strDatabase, string strSqlStatement, ref bool bHasData)
         {
             bool bRet = false;
-            string strConnect = "Server=" + m_strDbSource + ";Trusted_Connection=yes;database=" + strDatabase;
+            string strConnect = "Server=" + m_strDbSource + ";User Id=" + m_strDbUser + ";Password=" + m_strDbPwd + ";database=" + strDatabase;
             SqlConnection sqlConn = new SqlConnection(strConnect);
             SqlCommand sqlCommand = new SqlCommand(strSqlStatement, sqlConn);
 
@@ -277,8 +281,14 @@ namespace Wolframcarbid
 
                 XmlDocument xmlWC = new XmlDocument();
                 xmlWC.Load(strXmlPath);
-                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/DbSource");
-                m_strDbSource = nodeDb.InnerText;
+                XmlNode nodeDb = xmlWC.DocumentElement.SelectSingleNode("/Wolframcarbid/Database");
+                m_strDbSource = nodeDb["Source"].InnerText;//If no data here, just throw excpetion
+
+                if (nodeDb["User"] != null)
+                    m_strDbUser = nodeDb["User"].InnerText;
+
+                if (nodeDb["Pwd"] != null)
+                    m_strDbPwd = nodeDb["Pwd"].InnerText;
 
                 if (!IsDBExisted())
                 {
